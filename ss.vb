@@ -6,7 +6,7 @@ Public Class Form1
         Public Property Amount As Double
         Public ReadOnly Property Total As Double
             Get
-                Return Price * Amount
+                Return (Price * Amount).ToString("n2")
             End Get
         End Property
     End Class
@@ -15,48 +15,40 @@ Public Class Form1
         products = New List(Of Product)()
         LoadTable()
     End Sub
-
-    Private Sub Shoutdown_Click(sender As Object, e As EventArgs) Handles Shoutdown.Click
-        Dim res As MsgBoxResult = MsgBox("คุณต้องการปิดโปรแกรมหรือไม่", MsgBoxStyle.Question Or MsgBoxStyle.YesNo, "ปิดโปรแกรม")
-        If res = MsgBoxResult.Yes Then
-            Me.Close()
-        End If
-    End Sub
-
-    Private Sub Dropdown_ID_SelectedIndexChanged(sender As Object, e As EventArgs) Handles Dropdown_ID.SelectedIndexChanged
-        Dim selected As String = Dropdown_ID.SelectedItem.ToString()
-        Dim list As New List(Of String) From {"001", "002", "003", "004", "005"}
-        If list.Contains(selected) Then
+    Private Sub ComboBox1_SelectedIndexChanged(sender As Object, e As EventArgs) Handles ComboBox1.SelectedIndexChanged
+        If ComboBox1.SelectedIndex <> -1 Then
+            Dim selected As String = ComboBox1.SelectedItem.ToString()
             Select Case selected
-                Case "001" : NameP.Text = "ดินสอ" : Price_P.Text = "10.75"
-                Case "002" : NameP.Text = "ยางลบ" : Price_P.Text = "5.00"
-                Case "003" : NameP.Text = "ไม้บรรทัด" : Price_P.Text = "15.55"
-                Case "004" : NameP.Text = "สมุด" : Price_P.Text = "12.00"
-                Case "005" : NameP.Text = "ปากกา" : Price_P.Text = "7.25"
+                Case "001" : TBNAME.Text = "ดินสอ" : TBPrice.Text = "7.00"
+                Case "002" : TBNAME.Text = "ปากกา" : TBPrice.Text = "12.00"
+                Case "003" : TBNAME.Text = "ยางลบ" : TBPrice.Text = "5.75"
+                Case "004" : TBNAME.Text = "ไม้บรรทัด" : TBPrice.Text = "10.25"
+                Case "005" : TBNAME.Text = "สมุด" : TBPrice.Text = "14.50"
             End Select
         End If
     End Sub
 
-    Private Sub InsertData_Click(sender As Object, e As EventArgs) Handles InsertData.Click
-        If Dropdown_ID.SelectedIndex <> -1 And Not String.IsNullOrWhiteSpace(AmountP.Text) Then
-            Dim selected As String = Dropdown_ID.SelectedItem.ToString()
-            Dim IsExits As Product = products.FirstOrDefault(Function(p) p.ID = selected)
-            If IsExits IsNot Nothing Then
-                IsExits.Amount += Double.Parse(AmountP.Text)
+    Private Sub Insert_Click(sender As Object, e As EventArgs) Handles Insert.Click
+        If ComboBox1.SelectedIndex <> -1 And Not String.IsNullOrWhiteSpace(TBAmount.Text) And IsNumeric(TBAmount.Text) Then
+            Dim slected As String = ComboBox1.SelectedItem.ToString()
+            Dim Isexits = products.FirstOrDefault(Function(p) p.ID = slected)
+            If Isexits IsNot Nothing Then
+                Isexits.Amount += Double.Parse(TBAmount.Text)
             Else
-                Dim raw As New Product With {
-                    .ID = selected,
-                    .Name = NameP.Text,
-                    .Price = Double.Parse(Price_P.Text),
-                    .Amount = Double.Parse(AmountP.Text)
+                Dim raw = New Product With {
+                    .ID = slected,
+                    .Name = TBNAME.Text,
+                    .Price = TBPrice.Text,
+                    .Amount = TBAmount.Text
                 }
                 products.Add(raw)
             End If
             LoadTable()
         Else
-            MsgBox("กรุณากรอกข้อมูลให้ครบถ้วน", MsgBoxStyle.Exclamation, "เตือน")
+            MsgBox("กรุณากรอกข้อมูลให้ครบถ้วนแและถูกต้อง", MsgBoxStyle.Exclamation, "เตือน")
         End If
     End Sub
+
     Private Sub LoadTable()
         DataGridView1.Rows.Clear()
         For Each p In products
@@ -64,30 +56,41 @@ Public Class Form1
         Next
     End Sub
 
+    Private Sub Delete_Click(sender As Object, e As EventArgs) Handles Delete.Click
+        If DataGridView1.SelectedCells.Count >= 0 Then
+            Try
+                Dim index = DataGridView1.SelectedCells(0).RowIndex
+                Dim res As MsgBoxResult = MsgBox("คุณต้องการลบข้อมูลหรือไม่?", MsgBoxStyle.Question Or MsgBoxStyle.YesNo, "ลบข้อมูล")
+                If res = MsgBoxResult.Yes Then
+                    DataGridView1.Rows.RemoveAt(index)
+                End If
+            Catch ex As Exception
+
+            End Try
+            LoadTable()
+        End If
+    End Sub
+
     Private Sub DataGridView1_SelectionChanged(sender As Object, e As EventArgs) Handles DataGridView1.SelectionChanged
         If DataGridView1.SelectedCells.Count > 0 Then
             Dim index As Integer = DataGridView1.SelectedCells(0).RowIndex
             If index >= 0 Then
                 Dim data As DataGridViewRow = DataGridView1.Rows(index)
-                Dim Price As Double = Convert.ToDouble(data.Cells(2).Value)
-                Dim Amount As Double = Convert.ToDouble(data.Cells(3).Value)
-                Dim Total As Double = Price * Amount
+                Dim Total As Double = Convert.ToDouble(data.Cells(4).Value)
+                Debug.Print(Total)
                 Dim VAT As Double = Total * 0.07
                 Dim NetPrice As Double = Total * 1.07
-                TotalL.Text = Total.ToString("N2")
-                VATL.Text = VAT.ToString("N2")
-                NetPriceL.Text = NetPrice.ToString("N2")
+                LBTotal.Text = Total.ToString("n2")
+                LBVat.Text = VAT.ToString("n2")
+                LBNetPrice.Text = NetPrice.ToString("n2")
             End If
         End If
     End Sub
 
-    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
-        Dim index As Integer = DataGridView1.SelectedCells(0).RowIndex
-        If DataGridView1.SelectedCells.Count >= 0 Then
-            Dim res As MsgBoxResult = MsgBox("คุณต้องการลบข้อมูลหรือไม่", MsgBoxStyle.Question Or MsgBoxStyle.YesNo, "ลบข้อมูล")
-            If res = MsgBoxResult.Yes Then
-                DataGridView1.Rows.RemoveAt(index)
-            End If
+    Private Sub Shutdown_Click(sender As Object, e As EventArgs) Handles Shutdown.Click
+        Dim res As MsgBoxResult = MsgBox("คุณต้องการปิดโปรแกรมหรือไม่", MsgBoxStyle.Question Or MsgBoxStyle.YesNo, "ปิดโปรแกรม")
+        If res = MsgBoxResult.Yes Then
+            Me.Close()
         End If
     End Sub
 End Class
